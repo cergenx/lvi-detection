@@ -1,15 +1,12 @@
 """
 Example plots for amplitude and SVM feature sets.
 """
+import argparse
+
 import numpy as np
 from matplotlib import pyplot as plt
 
-try:
-    from lvi import quant_features, svm_feature_set, utils
-except ModuleNotFoundError:
-    import quant_features
-    import svm_feature_set
-    import utils
+from lvi import quant_features, svm_feature_set, utils
 
 
 FS = 64
@@ -173,6 +170,23 @@ def plot_svm_feature_examples():
     _finish_feature_figure(fig, left=0.13, bottom=0.08)
 
 
+def _parse_args():
+    parser = argparse.ArgumentParser(
+        description="Plot the quantitative or SVM feature examples.",
+    )
+    parser.add_argument(
+        "example",
+        nargs="?",
+        choices=("quant_features", "svm_features", "all"),
+        default="all",
+        help="feature example to plot (default: all)",
+    )
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    plot_quant_feature_examples()
-    plot_svm_feature_examples()
+    args = _parse_args()
+    if args.example in ("quant_features", "all"):
+        plot_quant_feature_examples()
+    if args.example in ("svm_features", "all"):
+        plot_svm_feature_examples()

@@ -113,7 +113,6 @@ class TestSVM:
 
 
 
-
 def example_train_and_test_svm_with_random_data():
     """Example workflow for training an SVM and running inference.
 
