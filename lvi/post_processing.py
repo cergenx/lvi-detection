@@ -10,7 +10,7 @@ class PostProc():
         self.min_event_len = int(min_event_len * fs) if min_event_len is not None else None
         self.win = np.ones(int(fs * win_len)) / int(fs * win_len) if win_len is not None else None
 
-    def post_processing(self, y_prob, y_pred):
+    def post_processing(self, y_prob, y_pred=None):
         if self.win is not None:
             y_prob_bounded = True if np.all((y_prob >= 0) & (y_prob <= 1)) else False
             y_prob = np.convolve(y_prob, self.win, mode='same')
@@ -18,7 +18,7 @@ class PostProc():
                 y_prob = np.clip(y_prob, 0, 1)
             y_pred = np.array(y_prob > 0.5, dtype=np.int32)
 
-        if self.min_event_len is not None:
+        if self.min_event_len is not None and y_pred is not None:
             # Repeat filling and deleting operations until mask stops changing.
             previous_y_pred = None
             while np.array_equal(y_pred, previous_y_pred) is False:

@@ -87,12 +87,16 @@ uv run python -m lvi.plot_examples svm_features
 ```
 
 
-### Run the SVM demonstration
+### SVM inference
 
-See the example in `example_train_and_test_svm_with_random_data()` in
-[`lvi/svm_train_test.py`](lvi/svm_train_test.py).  This example generates test signals and labels,
-extracts the feature set, trains a linear SVM, writes it to a temporary file, reloads it, and runs
-inference.
+See the function `example_svm()` in [`lvi/inference_examples.py`](lvi/inference_examples.py).  This
+example generates test signals and labels, extracts the feature set, and runs inference on a linear
+SVM model with post-processing.
+
+```bash
+uv run python -m lvi.inference_examples svm
+```
+
 
 ## 3. ConvNeXt Nano 🧩
 
@@ -100,21 +104,12 @@ inference.
 accepts single-channel 2 s segments sampled at 64 Hz. A batch has the shape `(n_batch, 1, 128, 1)`,
 and the model produces one value (probability) per segment.
 
-See `example_cnx_nano()` in [`lvi/cnx.py`](lvi/cnx.py). This function generates a 1-hour test
-signal, constructs 2 s windows shifted by one sample, performs inference, and applies 1 s smoothing
-and minimum-event (1 s) post-processing.
+See `example_cnx()` in [`lvi/inference_examples.py`](lvi/inference_examples.py). This function
+generates a 1-hour test signal, constructs 2 s windows shifted by one sample, performs inference,
+and applies 1 s smoothing and minimum-event (1 s) post-processing.
 
 ```bash
-uv run python -m lvi.cnx
-```
-
-The example instantiates `CNXNano` with randomly initialised weights so that the complete tensor and
-post-processing path can be exercised without a checkpoint. To use fitted weights from a compatible
-Lightning checkpoint, replace the model construction in `example_cnx_nano()` with:
-
-```python
-model = CNXNano.load_from_checkpoint("path/to/model.ckpt")
-model.eval()
+uv run python -m lvi.inference_examples cnx
 ```
 
 ## Repository structure 📁
@@ -127,7 +122,7 @@ model.eval()
 ├── lvi/
 │   ├── quant_features.py       # four quantitative amplitude features used to detect IBI
 │   ├── svm_feature_set.py      # feature set for the SVM model
-│   ├── svm_train_test.py       # linear SVM training and inference
+│   ├── inference_examples.py   # inference examples for SVM and ConvNeXt models
 │   ├── cnx.py                  # ConvNeXt Nano model and inference example
 │   ├── post_processing.py      # shared output post-processing
 │   ├── plot_examples.py        # feature visualisations

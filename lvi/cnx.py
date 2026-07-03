@@ -3,7 +3,6 @@ Model definition for the ConvNeXt Nano model.
 """
 import collections
 from copy import deepcopy
-from time import perf_counter
 
 import numpy as np
 import torch
@@ -11,8 +10,6 @@ from torch import nn
 from torch.optim.lr_scheduler import LRScheduler
 from pytorch_lightning import LightningModule
 import torch.nn.functional as F
-
-from lvi.post_processing import PostProc
 
 
 class ConvNeXtBlock(nn.Module):
@@ -355,72 +352,3 @@ class CNXNano(ConvNeXt):
             linear=False
         )
         return {'optimizer': optimizer, 'lr_scheduler': lr_scheduler}
-
-
-
-
-def example_cnx_nano():
-    """Demonstrate a simple proof-of-principle ConvNeXt inference workflow.
-
-    This example intentionally omits components such as checkpoint
-    loading, a dataset, and a dataloader. It divides a test signal into
-    overlapping 2-second segments shifted by one sample, runs them through
-    CNXNano(), and post-processes the output using a 1-second rectangular
-    smoothing window and a 1-second minimum event length.
-    """
-    fs = 64
-    signal_duration = 60 * 60
-    n_samples = fs * signal_duration
-    segment_len = 2 * fs
-
-    print(
-        f"1) Generating a test signal containing {n_samples} samples "
-        f"({signal_duration} seconds at {fs} Hz).",
-        flush=True,
-    )
-    start_time = perf_counter()
-    x = np.random.randn(n_samples)
-
-    print(
-        "2) Loading the ConvNeXt Nano model with random weights for this "
-        "proof-of-principle example.",
-        flush=True,
-    )
-    model = CNXNano()
-    model.eval()
-
-    n_segments = len(x) - segment_len + 1
-    print(
-        f"3) Dividing the signal into {n_segments} overlapping 2-second "
-        "segments, shifted by one sample, and running model inference.",
-        flush=True,
-    )
-    x_segments = np.lib.stride_tricks.sliding_window_view(x, segment_len)
-    x_segments = torch.as_tensor(x_segments.copy(), dtype=torch.float32)
-    x_segments = x_segments.unsqueeze(1).unsqueeze(-1)  # (batch, 1, 128, 1)
-
-    with torch.inference_mode():
-        logits = model(x_segments)
-        y_prob = model.activate_logits(logits).cpu().numpy()
-
-    y_pred = (y_prob > 0.5).astype(np.int32)
-
-    print(
-        "4) Post-processing the model output with a 1-second rectangular "
-        "smoothing window and a 1-second minimum event length.",
-        flush=True,
-    )
-    post_proc = PostProc(fs=fs, win_len=1, min_event_len=1)
-    y_prob, y_pred = post_proc.post_processing(y_prob, y_pred)
-
-    elapsed_time = perf_counter() - start_time
-    print(
-        f"5) Complete in {elapsed_time:.2f} seconds. The probability array "
-        f"has shape {y_prob.shape}, and the binary prediction array has "
-        f"shape {y_pred.shape}.",
-        flush=True,
-    )
-
-
-if __name__ == "__main__":
-    example_cnx_nano()
