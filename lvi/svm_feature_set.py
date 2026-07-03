@@ -8,10 +8,8 @@ import math
 from scipy.signal import hilbert, resample_poly
 from dataclasses import dataclass
 
-try:
-    from lvi import utils
-except ModuleNotFoundError:
-    import utils
+from lvi import utils
+
 
 @dataclass(frozen=True)
 class IBIParams:
@@ -685,4 +683,3 @@ def gen_feature_set(x, Fs, params=None):
         t_stat[:, inans] = np.nan
 
     return(t_stat)
-
