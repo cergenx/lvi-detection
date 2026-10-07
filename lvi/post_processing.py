@@ -2,6 +2,7 @@
 Post-processing on teh detection output of the SVM or CNN model
 """
 import numpy as np
+from scipy.signal import convolve
 
 
 class PostProc():
@@ -13,7 +14,8 @@ class PostProc():
     def post_processing(self, y_prob, y_pred=None):
         if self.win is not None:
             y_prob_bounded = True if np.all((y_prob >= 0) & (y_prob <= 1)) else False
-            y_prob = np.convolve(y_prob, self.win, mode='same')
+            # Keep the input length even when the smoothing window is longer.
+            y_prob = convolve(y_prob, self.win, mode='same', method='direct')
             if y_prob_bounded:
                 y_prob = np.clip(y_prob, 0, 1)
             y_pred = np.array(y_prob > 0.5, dtype=np.int32)

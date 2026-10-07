@@ -246,10 +246,10 @@ def feat_short_time_an(x, Fs, feat_type='envelope', **kwargs):
                                  params.epoch_win_type[idx], Fs)
 
     N = len(x)
-    N_epochs = np.floor(
-        (N - epoch_p['L_epoch']) / epoch_p['L_hop']).astype(int)
-    if N_epochs < 1:
-        N_epochs = 1
+    N_epochs = max(
+        1,
+        1 + (N - epoch_p['L_epoch']) // epoch_p['L_hop'],
+    )
     nw = np.arange(epoch_p['L_epoch'])
 
     # -------------------------------------------------------------------
@@ -269,7 +269,7 @@ def feat_short_time_an(x, Fs, feat_type='envelope', **kwargs):
         # -------------------------------------------------------------------
 
         # define the frequency range and conver to log-scale
-        freq = np.linspace(0, Fs/2, params.N_freq)
+        freq = np.fft.fftfreq(params.N_freq, d=1 / Fs)
         irange = np.where((freq > f_band[0]) & (freq < f_band[1]))
         freq_limit = freq[irange]
         freq_db = 10 * np.log10(freq_limit)
@@ -285,8 +285,6 @@ def feat_short_time_an(x, Fs, feat_type='envelope', **kwargs):
                            np.floor(f_band[1] * f_scale).astype(int) + 1)
         irange_total = np.arange(np.ceil(f_band_total[0] * f_scale).astype(int),
                                  np.floor(f_band_total[1] * f_scale).astype(int) + 1)
-        irange = irange - 1
-        irange_total = irange_total - 1
 
     elif feat_type == 'if':
         # -------------------------------------------------------------------
@@ -606,6 +604,7 @@ def gen_feature_set(x, Fs, params=None):
     # for missing data, insert 0's when generating the features
     inans = np.argwhere(np.isnan(x))
     if inans.size > 0:
+        x = x.copy()
         x[inans] = 0
 
 
@@ -622,7 +621,7 @@ def gen_feature_set(x, Fs, params=None):
             if params.feature_set_freqbands[p] == filter_bands[n]
         ]
         # print("for freq. band = {}; match={}".format(filter_bands[n], np.any(match_fb)))
-        if np.any(match_fb):
+        if match_fb:
             # print("from {} to {} Hz".format(params.freq_bands[n][1],params.freq_bands[n][0]))
             x_f = utils.bandpass_butter_filt(
                 x, Fs, params.freq_bands[n][1],
